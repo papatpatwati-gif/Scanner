@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta property="og:title" content="Scanner Kilat No Iklan">
+<meta property="og:description" content="Konversi gambar ke PDF instan, aman, dan tanpa iklan.">
+<meta property="og:image" content="https://alamat-gambar-anda.com/logo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner Kilat | No Ads</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body class="bg-[#0b0e11] text-[#e8eaed] font-sans min-h-screen flex flex-col items-center p-5">
+
+    <header class="text-center mb-8">
+        <h1 class="text-3xl font-extrabold text-[#bfa063]">SCANNER KILAT</h1>
+        <p class="text-gray-400 text-sm italic">Tanpa Iklan • Tanpa Login • 100% Private</p>
+    </header>
+
+    <div class="bg-[#161b22] p-6 rounded-2xl border border-gray-800 shadow-xl w-full max-w-md text-center">
+        <label class="block mb-4 cursor-pointer">
+            <span class="bg-[#bfa063] text-black px-6 py-3 rounded-lg font-bold block hover:bg-yellow-600 transition">
+                📸 AMBIL FOTO / PILIH GAMBAR
+            </span>
+            <input type="file" id="imageInput" accept="image/*" class="hidden" multiple>
+        </label>
+
+        <div id="previewContainer" class="grid grid-cols-2 gap-2 mb-4">
+            </div>
+
+        <button id="downloadBtn" class="w-full bg-green-600 text-white px-6 py-3 rounded-lg font-bold hidden hover:bg-green-700 transition">
+            💾 SIMPAN JADI PDF
+        </button>
+    </div>
+
+    <footer class="mt-auto pt-10 text-gray-600 text-xs">
+        Diproses langsung di HP Anda. File tidak dikirim ke server manapun.
+    </footer>
+
+    <script>
+        const { jsPDF } = window.jspdf;
+        const imageInput = document.getElementById('imageInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const downloadBtn = document.getElementById('downloadBtn');
+        let imagesData = [];
+
+        imageInput.addEventListener('change', function(e) {
+            const files = e.target.files;
+            previewContainer.innerHTML = '';
+            imagesData = [];
+
+            if (files.length > 0) {
+                downloadBtn.classList.remove('hidden');
+                Array.from(files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const imgTag = document.createElement('img');
+                        imgTag.src = event.target.result;
+                        imgTag.className = "rounded border border-gray-700 w-full h-32 object-cover";
+                        previewContainer.appendChild(imgTag);
+                        imagesData.push(event.target.result);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        });
+
+        downloadBtn.addEventListener('click', function() {
+            const pdf = new jsPDF();
+            
+            imagesData.forEach((data, index) => {
+                const img = new Image();
+                img.src = data;
+                
+                // Logika sederhana: satu gambar satu halaman
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                
+                if (index > 0) pdf.addPage();
+                pdf.addImage(data, 'JPEG', 10, 10, pageWidth - 20, pageHeight - 20);
+            });
+
+            pdf.save("Hasil_Scan_Anda.pdf");
+            alert("PDF Berhasil Dibuat!");
+        });
+    </script>
+</body>
+</html>
