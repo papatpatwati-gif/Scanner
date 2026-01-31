@@ -83,6 +83,85 @@
             pdf.save("Hasil_Scan_Anda.pdf");
             alert("PDF Berhasil Dibuat!");
         });
+        // Tambahkan fungsi ini di dalam script Anda
+        function pertajamGambar(imgElement) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set ukuran canvas sama dengan gambar asli
+            canvas.width = imgElement.naturalWidth;
+            canvas.height = imgElement.naturalHeight;
+
+            // --- RAHASIA DAPUR PENAJAM ---
+            // contrast(1.4): Menaikkan kontras agar tulisan makin hitam
+            // grayscale(1): Menghilangkan warna (kertas jadi putih/abu)
+            // brightness(1.1): Menerangkan kertas yang gelap
+            ctx.filter = 'contrast(1.5) grayscale(1) brightness(1.2)';
+            
+            ctx.drawImage(imgElement, 0, 0);
+            
+            // Kembalikan dalam bentuk data URL (Base64)
+            return canvas.toDataURL('image/jpeg', 0.8);
+        }
+
+        // Modifikasi bagian saat gambar dipilih
+        imageInput.addEventListener('change', function(e) {
+            const files = e.target.files;
+            previewContainer.innerHTML = '';
+            imagesData = [];
+
+            if (files.length > 0) {
+                downloadBtn.classList.remove('hidden');
+                Array.from(files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const tempImg = new Image();
+                        tempImg.src = event.target.result;
+                        
+                        tempImg.onload = function() {
+                            // Jalankan fungsi penajam otomatis!
+                            const gambarJernih = pertajamGambar(tempImg);
+                            
+                            const imgTag = document.createElement('img');
+                            imgTag.src = gambarJernih; // Pakai hasil yang sudah jernih
+                            imgTag.className = "rounded border-2 border-[#bfa063] w-full h-48 object-cover";
+                            previewContainer.appendChild(imgTag);
+                            
+                            imagesData.push(gambarJernih);
+                        };
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        });
+        downloadBtn.addEventListener('click', function() {
+            const pdf = new jsPDF();
+            
+            imagesData.forEach((data, index) => {
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                
+                if (index > 0) pdf.addPage();
+                
+                // 1. Masukkan Gambar yang sudah jernih
+                pdf.addImage(data, 'JPEG', 10, 10, pageWidth - 20, pageHeight - 40);
+
+                // 2. Tambahkan Watermark di bawah
+                pdf.setFontSize(10);
+                pdf.setTextColor(150); // Warna abu-abu elegan
+                const teksWatermark = "Scanned by Kaffah Media Scanner";
+                
+                // Letakkan di tengah bawah
+                const textWidth = pdf.getTextWidth(teksWatermark);
+                const x = (pageWidth - textWidth) / 2;
+                const y = pageHeight - 15;
+                
+                pdf.text(teksWatermark, x, y);
+            });
+
+            pdf.save("Kaffah_Scan_" + Date.now() + ".pdf");
+            alert("PDF Berhasil Dibuat dengan Watermark!");
+        });
     </script>
 </body>
 </html>
