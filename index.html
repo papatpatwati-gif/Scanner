@@ -10,27 +10,38 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
-<body class="bg-[#0b0e11] text-[#e8eaed] font-sans min-h-screen flex flex-col items-center p-5">
+<body class="bg-gray-900 text-white min-h-screen p-4">
 
-    <header class="text-center mb-8">
-        <h1 class="text-3xl font-extrabold text-[#bfa063]">SCANNER KILAT</h1>
-        <p class="text-gray-400 text-sm italic">Tanpa Iklan • Tanpa Login • 100% Private</p>
-    </header>
+    <div class="max-w-md mx-auto bg-gray-800 rounded-xl shadow-2xl overflow-hidden border border-gray-700">
+        <div class="p-6 text-center">
+            <h1 class="text-2xl font-bold text-gold mb-2">KAFAH MEDIA SCANNER</h1>
+            <p class="text-gray-400 text-sm mb-6">Ubah dokumen jadi PDF Jernih & Profesional</p>
 
-    <div class="bg-[#161b22] p-6 rounded-2xl border border-gray-800 shadow-xl w-full max-w-md text-center">
-        <label class="block mb-4 cursor-pointer">
-            <span class="bg-[#bfa063] text-black px-6 py-3 rounded-lg font-bold block hover:bg-yellow-600 transition">
-                📸 AMBIL FOTO / PILIH GAMBAR
-            </span>
-            <input type="file" id="imageInput" accept="image/*" class="hidden" multiple>
-        </label>
-
-        <div id="previewContainer" class="grid grid-cols-2 gap-2 mb-4">
+            <div id="input-container" class="mb-6 flex flex-col items-center justify-center">
+                <label for="imageInput" class="cursor-pointer bg-gold text-black font-bold py-3 px-8 rounded-full shadow-lg hover:bg-yellow-600 transition-all flex items-center gap-2">
+                    <span id="btn-text">📸 Ambil Foto Dokumen</span>
+                    <input type="file" id="imageInput" accept="image/*" class="hidden"/>
+                </label>
+                <p class="text-[10px] text-gray-500 mt-2 italic">Tips: Pastikan cahaya terang agar hasil maksimal</p>
             </div>
 
-        <button id="downloadBtn" class="w-full bg-green-600 text-white px-6 py-3 rounded-lg font-bold hidden hover:bg-green-700 transition">
-            💾 SIMPAN JADI PDF
-        </button>
+            <div id="crop-area" class="hidden mb-6 p-2 border-2 border-dashed border-gold rounded-lg bg-black/20">
+                <h3 class="text-gold font-bold mb-2 text-sm">Atur Tepi Kertas</h3>
+                <div class="max-h-[300px] overflow-hidden rounded mb-4 bg-black">
+                    <img id="image-to-crop" class="max-w-full block">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="btn-bw" class="bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-xs font-bold">🔘 Hitam Putih</button>
+                    <button id="btn-color" class="bg-gray-700 hover:bg-gray-600 py-2 rounded-lg text-xs font-bold">🎨 Warna Jernih</button>
+                </div>
+            </div>
+
+            <div id="previewContainer" class="grid grid-cols-2 gap-3 mb-6"></div>
+
+            <button id="downloadBtn" class="hidden w-full bg-gold text-black font-bold py-3 rounded-lg shadow-lg hover:bg-yellow-600 transition-all">
+                📥 DOWNLOAD PDF
+            </button>
+        </div>
     </div>
 
     <footer class="mt-auto pt-10 text-gray-600 text-xs">
@@ -38,130 +49,115 @@
     </footer>
 
     <script>
-        const { jsPDF } = window.jspdf;
-        const imageInput = document.getElementById('imageInput');
-        const previewContainer = document.getElementById('previewContainer');
-        const downloadBtn = document.getElementById('downloadBtn');
-        let imagesData = [];
+    const { jsPDF } = window.jspdf;
+    const imageInput = document.getElementById('imageInput');
+    const previewContainer = document.getElementById('previewContainer');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const cropArea = document.getElementById('crop-area');
+    const imageToCrop = document.getElementById('image-to-crop');
+    
+    let imagesData = [];
+    let cropper;
 
-        imageInput.addEventListener('change', function(e) {
-            const files = e.target.files;
-            previewContainer.innerHTML = '';
-            imagesData = [];
+    // 1. Fungsi Penajam dengan Opsi Mode
+    function prosesGambar(canvasInput, mode) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = canvasInput.width;
+        canvas.height = canvasInput.height;
 
-            if (files.length > 0) {
-                downloadBtn.classList.remove('hidden');
-                Array.from(files).forEach(file => {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        const imgTag = document.createElement('img');
-                        imgTag.src = event.target.result;
-                        imgTag.className = "rounded border border-gray-700 w-full h-32 object-cover";
-                        previewContainer.appendChild(imgTag);
-                        imagesData.push(event.target.result);
-                    };
-                    reader.readAsDataURL(file);
-                });
-            }
-        });
-
-        downloadBtn.addEventListener('click', function() {
-            const pdf = new jsPDF();
-            
-            imagesData.forEach((data, index) => {
-                const img = new Image();
-                img.src = data;
-                
-                // Logika sederhana: satu gambar satu halaman
-                const pageWidth = pdf.internal.pageSize.getWidth();
-                const pageHeight = pdf.internal.pageSize.getHeight();
-                
-                if (index > 0) pdf.addPage();
-                pdf.addImage(data, 'JPEG', 10, 10, pageWidth - 20, pageHeight - 20);
-            });
-
-            pdf.save("Hasil_Scan_Anda.pdf");
-            alert("PDF Berhasil Dibuat!");
-        });
-        // Tambahkan fungsi ini di dalam script Anda
-        function pertajamGambar(imgElement) {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            // Set ukuran canvas sama dengan gambar asli
-            canvas.width = imgElement.naturalWidth;
-            canvas.height = imgElement.naturalHeight;
-
-            // --- RAHASIA DAPUR PENAJAM ---
-            // contrast(1.4): Menaikkan kontras agar tulisan makin hitam
-            // grayscale(1): Menghilangkan warna (kertas jadi putih/abu)
-            // brightness(1.1): Menerangkan kertas yang gelap
-            ctx.filter = 'contrast(1.5) grayscale(1) brightness(1.2)';
-            
-            ctx.drawImage(imgElement, 0, 0);
-            
-            // Kembalikan dalam bentuk data URL (Base64)
-            return canvas.toDataURL('image/jpeg', 0.8);
+        if (mode === 'bw') {
+            ctx.filter = 'contrast(1.6) grayscale(1) brightness(1.1)';
+        } else {
+            ctx.filter = 'contrast(1.2) brightness(1.1) saturate(1.2)';
         }
+        
+        ctx.drawImage(canvasInput, 0, 0);
+        return canvas.toDataURL('image/jpeg', 0.8);
+    }
 
-        // Modifikasi bagian saat gambar dipilih
-        imageInput.addEventListener('change', function(e) {
-            const files = e.target.files;
-            previewContainer.innerHTML = '';
-            imagesData = [];
+    // 2. Event saat pilih file
+    imageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                cropArea.classList.remove('hidden');
+                imageToCrop.src = event.target.result;
+                if (cropper) cropper.destroy();
+                cropper = new Cropper(imageToCrop, { viewMode: 1, autoCropArea: 0.9 });
+                cropArea.scrollIntoView({ behavior: 'smooth' });
+            };
+            reader.readAsDataURL(file);
+        }
+    });
 
-            if (files.length > 0) {
-                downloadBtn.classList.remove('hidden');
-                Array.from(files).forEach(file => {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        const tempImg = new Image();
-                        tempImg.src = event.target.result;
-                        
-                        tempImg.onload = function() {
-                            // Jalankan fungsi penajam otomatis!
-                            const gambarJernih = pertajamGambar(tempImg);
-                            
-                            const imgTag = document.createElement('img');
-                            imgTag.src = gambarJernih; // Pakai hasil yang sudah jernih
-                            imgTag.className = "rounded border-2 border-[#bfa063] w-full h-48 object-cover";
-                            previewContainer.appendChild(imgTag);
-                            
-                            imagesData.push(gambarJernih);
-                        };
-                    };
-                    reader.readAsDataURL(file);
-                });
-            }
-        });
-        downloadBtn.addEventListener('click', function() {
-            const pdf = new jsPDF();
+    // 3. Tombol Mode
+    document.getElementById('btn-bw').addEventListener('click', () => selesaikanPotong('bw'));
+    document.getElementById('btn-color').addEventListener('click', () => selesaikanPotong('color'));
+
+    // 4. Fungsi Selesaikan Potong
+    function selesaikanPotong(mode) {
+        if (!cropper) return;
+        
+        const canvas = cropper.getCroppedCanvas({ maxWidth: 1600, maxHeight: 1600 });
+        const hasilFinal = prosesGambar(canvas, mode);
+        
+        const currentIndex = imagesData.length;
+        imagesData.push(hasilFinal);
+        
+        const wrapper = document.createElement('div');
+        wrapper.className = "relative group";
+        wrapper.id = `img-wrapper-${currentIndex}`;
+        
+        wrapper.innerHTML = `
+            <img src="${hasilFinal}" class="rounded border border-[#bfa063] w-full h-32 object-cover">
+            <button onclick="hapusGambar(${currentIndex})" class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg font-bold">✕</button>
+        `;
+        
+        previewContainer.appendChild(wrapper);
+        
+        cropper.destroy();
+        cropper = null; // Reset cropper
+        cropArea.classList.add('hidden');
+        downloadBtn.classList.remove('hidden');
+        document.getElementById('btn-text').innerText = "➕ Tambah Halaman Lagi";
+        imageInput.value = ""; 
+    }
+
+    // 5. Fungsi Hapus Gambar
+    window.hapusGambar = function(index) {
+        imagesData[index] = null; 
+        const element = document.getElementById(`img-wrapper-${index}`);
+        if (element) element.remove();
+        
+        const sisaGambar = imagesData.filter(img => img !== null);
+        if (sisaGambar.length === 0) {
+            downloadBtn.classList.add('hidden');
+            document.getElementById('btn-text').innerText = "📸 Ambil Foto Dokumen";
+        }
+    }
+
+    // 6. Fungsi Download PDF
+    downloadBtn.addEventListener('click', function() {
+        const pdf = new jsPDF();
+        const validImages = imagesData.filter(img => img !== null);
+        
+        validImages.forEach((data, index) => {
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
             
-            imagesData.forEach((data, index) => {
-                const pageWidth = pdf.internal.pageSize.getWidth();
-                const pageHeight = pdf.internal.pageSize.getHeight();
-                
-                if (index > 0) pdf.addPage();
-                
-                // 1. Masukkan Gambar yang sudah jernih
-                pdf.addImage(data, 'JPEG', 10, 10, pageWidth - 20, pageHeight - 40);
-
-                // 2. Tambahkan Watermark di bawah
-                pdf.setFontSize(10);
-                pdf.setTextColor(150); // Warna abu-abu elegan
-                const teksWatermark = "Scanned by Kaffah Media Scanner";
-                
-                // Letakkan di tengah bawah
-                const textWidth = pdf.getTextWidth(teksWatermark);
-                const x = (pageWidth - textWidth) / 2;
-                const y = pageHeight - 15;
-                
-                pdf.text(teksWatermark, x, y);
-            });
-
-            pdf.save("Kaffah_Scan_" + Date.now() + ".pdf");
-            alert("PDF Berhasil Dibuat dengan Watermark!");
+            if (index > 0) pdf.addPage();
+            pdf.addImage(data, 'JPEG', 10, 10, pageWidth - 20, pageHeight - 40);
+            
+            pdf.setFontSize(10);
+            pdf.setTextColor(150);
+            const wm = "Scanned by Kaffah Media Scanner";
+            pdf.text(wm, (pageWidth - pdf.getTextWidth(wm)) / 2, pageHeight - 15);
         });
-    </script>
+        
+        pdf.save("Kaffah_Scanner_" + Date.now() + ".pdf");
+    });
+</script>
 </body>
 </html>
