@@ -3,12 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta property="og:title" content="Scanner Kilat No Iklan">
-<meta property="og:description" content="Konversi gambar ke PDF instan, aman, dan tanpa iklan.">
-<meta property="og:image" content="https://alamat-gambar-anda.com/logo.png">
+    <meta property="og:description" content="Konversi gambar ke PDF instan, aman, dan tanpa iklan.">
+    <meta property="og:image" content="https://alamat-gambar-anda.com/logo.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scanner Kilat | No Ads</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- Cropper.js css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
+
+    <!-- Cropper.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 </head>
 <body class="bg-gray-900 text-white min-h-screen p-4">
 
@@ -85,6 +92,7 @@
                 cropArea.classList.remove('hidden');
                 imageToCrop.src = event.target.result;
                 if (cropper) cropper.destroy();
+                // ensure Cropper is defined (cdn script included above)
                 cropper = new Cropper(imageToCrop, { viewMode: 1, autoCropArea: 0.9 });
                 cropArea.scrollIntoView({ behavior: 'smooth' });
             };
@@ -110,6 +118,7 @@
         wrapper.className = "relative group";
         wrapper.id = `img-wrapper-${currentIndex}`;
         
+        // Fixed preview innerHTML (previous version was truncated)
         wrapper.innerHTML = `
             <img src="${hasilFinal}" class="rounded border border-[#bfa063] w-full h-32 object-cover">
             <button onclick="hapusGambar(${currentIndex})" class="absolute -top-2 -right-2 bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow-lg font-bold">✕</button>
@@ -158,6 +167,6 @@
         
         pdf.save("Kaffah_Scanner_" + Date.now() + ".pdf");
     });
-</script>
+    </script>
 </body>
 </html>
